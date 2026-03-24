@@ -1,0 +1,45 @@
+# ─── Datos ────────────────────────────────────────────────────────────────────
+data/raw/
+data/processed/
+data/external/
+
+# ─── Modelos y resultados grandes ─────────────────────────────────────────────
+experiments/results/*.pt
+experiments/results/*.pkl
+experiments/results/*.h5
+*.pt
+*.pkl
+*.h5
+
+# ─── Python ───────────────────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+dist/
+build/
+*.so
+.Python
+env/
+venv/
+.venv/
+.env
+
+# ─── Jupyter ──────────────────────────────────────────────────────────────────
+.ipynb_checkpoints/
+*.ipynb_checkpoints
+
+# ─── IDE ──────────────────────────────────────────────────────────────────────
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# ─── OS ───────────────────────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ─── Logs ─────────────────────────────────────────────────────────────────────
+*.log
+logs/

@@ -1,0 +1,15 @@
+# Configuración experimento: GAE baseline
+model: gae
+dataset: custom       # Nombre del dataset en data/raw/
+edge_file: edges.csv  # Columnas: source, target (y opcionalmente weight)
+node_file: nodes.csv  # Columnas: node_id + features
+
+# Parámetros del modelo
+encoder_dim: 64
+epochs: 200
+lr: 0.01
+contamination: 0.05   # Fracción esperada de anomalías
+
+# Evaluación
+threshold_percentile: 95   # Top 5% como anomalías
+save_results: true
