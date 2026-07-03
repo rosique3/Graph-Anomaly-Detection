@@ -2,6 +2,14 @@
 data/raw/
 data/processed/
 data/external/
+data/results/
+
+# ─── Resultados y Gráficos pesados ────────────────────────────────────────────
+results/
+images/
+graphs/*.png
+graphs/*.svg
+map/
 
 # ─── Modelos y resultados grandes ─────────────────────────────────────────────
 experiments/results/*.pt
@@ -39,6 +47,7 @@ venv/
 .DS_Store
 Thumbs.db
 desktop.ini
+*.lnk
 
 # ─── Logs ─────────────────────────────────────────────────────────────────────
 *.log

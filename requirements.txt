@@ -1,6 +1,7 @@
 # ─── Core ─────────────────────────────────────────────────────────────────────
 numpy>=1.24
 pandas>=2.0
+geopandas>=0.13                # Soporte para datos geoespaciales (notebook 02)
 scipy>=1.10
 
 # ─── Machine Learning ─────────────────────────────────────────────────────────
@@ -22,12 +23,13 @@ python-louvain>=0.16           # community.best_partition (Louvain)
 #
 torch>=2.0
 torch-geometric>=2.4
+pygod>=1.0.0                   # Detección de anomalías en grafos (notebooks 05, 06, 07)
 
 # ─── Visualización ────────────────────────────────────────────────────────────
 matplotlib>=3.7
 seaborn>=0.12
 plotly>=5.15
-umap-learn>=0.5                # Visualización de embeddings (alternativa a t-SNE)
+adjustText>=0.8                # Ajuste automático de etiquetas en gráficos (notebooks 02, 03)
 
 # ─── Dataset ──────────────────────────────────────────────────────────────────
 kagglehub>=0.3                 # Descarga automática desde Kaggle (notebook 01)

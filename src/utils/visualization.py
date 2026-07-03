@@ -1,97 +1,251 @@
 """
 visualization.py
-Funciones de visualización para grafos y resultados de anomalías.
+Project-wide visual style and figure utilities.
 """
 
-import numpy as np
-import pandas as pd
-import matplotlib.pyplot as plt
-import matplotlib.cm as cm
-import networkx as nx
+from __future__ import annotations
+
 from pathlib import Path
 
-FIGURES_DIR = Path(__file__).resolve().parents[2] / "reports" / "figures"
+import matplotlib as mpl
+import matplotlib.pyplot as plt
+import networkx as nx
+import numpy as np
+import seaborn as sns
+
+# ── Output ───────────────────────────────────────────────────────────────────
+FIGURES_DIR = Path(__file__).resolve().parents[2] / "results" / "figures"
 FIGURES_DIR.mkdir(parents=True, exist_ok=True)
 
+# ── Palette ───────────────────────────────────────────────────────────────────
+# Okabe-Ito (2008): colorblind-safe and grayscale-separable.
+PALETTE = {
+    "M":       "#0072B2",   # blue      – Members graph
+    "G":       "#E69F00",   # amber     – Groups graph
+    "MG":      "#009E73",   # teal      – Bipartite graph
+    "anomaly": "#D55E00",   # vermilion – anomaly highlight
+    "neutral": "#999999",   # grey      – baselines / reference lines
+}
 
-def plot_graph(G: nx.Graph, anomaly_scores=None, node_labels=None,
-               title: str = "Grafo", save_as: str = None, pos=None):
+# Ordered sequence for categories, communities, ordinal series.
+CAT_COLORS = [
+    "#0072B2", "#E69F00", "#009E73", "#D55E00",
+    "#56B4E9", "#F0E442", "#CC79A7", "#000000",
+]
+
+# Colormaps
+CMAP_SEQ  = "viridis"   # perceptually uniform, grayscale-safe
+CMAP_DIV  = "RdBu_r"    # diverging
+CMAP_HEAT = "YlOrRd"    # heatmaps
+
+# ── Figure sizes ─────────────────────────────────────────────────────────────
+FS = {
+    "single":  (6.0,  4.0),
+    "wide":    (8.0,  4.0),
+    "r1c2":    (12.0, 4.0),
+    "r1c3":    (14.0, 4.5),
+    "r2c2":    (12.0, 8.0),
+    "r3c1":    (6.0,  11.0),
+    "map":     (10.0, 6.0),
+    "heatmap": (8.0,  6.0),
+}
+
+DPI_SCREEN = 120
+DPI_PRINT  = 300
+
+# ── Typography ────────────────────────────────────────────────────────────────
+FONT = {
+    "title":      11,
+    "axis_label": 10,
+    "tick":        9,
+    "legend":      9,
+    "annotation":  8,
+}
+
+
+# ── Theme ─────────────────────────────────────────────────────────────────────
+def apply_theme() -> None:
+    """Set project-wide rcParams. Call once at the top of every notebook."""
+    sns.set_theme(
+        style="ticks",   # removes top/right spines; outward ticks → Nature style
+        rc={
+            "figure.dpi":            DPI_SCREEN,
+            "savefig.dpi":           DPI_PRINT,
+            "figure.figsize":        list(FS["single"]),
+            "savefig.bbox":          "tight",
+            "savefig.pad_inches":    0.05,
+
+            "font.family":           "sans-serif",
+            "font.sans-serif":       ["DejaVu Sans", "Arial", "Helvetica Neue"],
+            "font.size":             FONT["tick"],
+            "axes.titlesize":        FONT["title"],
+            "axes.titleweight":      "normal",
+            "axes.labelsize":        FONT["axis_label"],
+            "xtick.labelsize":       FONT["tick"],
+            "ytick.labelsize":       FONT["tick"],
+            "legend.fontsize":       FONT["legend"],
+            "legend.title_fontsize": FONT["legend"],
+
+            "axes.linewidth":        0.8,
+            "axes.axisbelow":        True,
+            "axes.grid":             False,   # opt-in per chart via polish()
+
+            "xtick.direction":       "out",
+            "ytick.direction":       "out",
+            "xtick.major.size":      4.0,
+            "ytick.major.size":      4.0,
+            "xtick.major.width":     0.8,
+            "ytick.major.width":     0.8,
+
+            "legend.frameon":        False,
+            "legend.loc":            "best",
+
+            "lines.linewidth":       1.5,
+            "patch.linewidth":       0.4,
+        },
+    )
+
+
+def polish(
+    ax: plt.Axes,
+    *,
+    grid: bool = True,
+    grid_axis: str = "y",
+) -> None:
     """
-    Visualiza el grafo coloreando nodos por score de anomalía.
+    Per-chart finishing pass: explicit spine removal + optional grid.
+
+    Call after all plotting calls, before tight_layout / savefig.
+    Maps and network graphs should skip this (they call ax.axis('off')).
 
     Args:
-        G: Grafo NetworkX.
-        anomaly_scores: Dict o array de scores por nodo (opcional).
-        node_labels: Dict {node_id: label} para etiquetar nodos.
-        title: Título del plot.
-        save_as: Nombre de archivo para guardar en reports/figures/.
-        pos: Layout de posiciones (si None, usa spring_layout).
+        ax:        Target Axes.
+        grid:      Whether to draw a grid (default True).
+        grid_axis: 'x', 'y', or 'both'.
     """
-    fig, ax = plt.subplots(figsize=(12, 8))
+    ax.spines["top"].set_visible(False)
+    ax.spines["right"].set_visible(False)
+    ax.grid(grid, axis=grid_axis, color="#E5E5E5", linewidth=0.6, zorder=0)
+
+
+def save_figure(fig: plt.Figure, name: str, *, dpi: int = DPI_PRINT) -> Path:
+    """
+    Save a figure to results/figures/<name>.
+
+    Naming convention: {notebook_id}_{description}.png
+    Examples: 02_members_states.png, 05_anomaly_scores_M.png
+
+    Args:
+        fig:  Figure to save.
+        name: Filename with extension.
+        dpi:  Resolution in DPI (default 300).
+
+    Returns:
+        Absolute path of the saved file.
+    """
+    out = FIGURES_DIR / name
+    fig.savefig(out, dpi=dpi, bbox_inches="tight", pad_inches=0.05)
+    print(f"[viz] saved -> {out}")
+    return out
+
+
+# ── Reusable chart functions ──────────────────────────────────────────────────
+
+def plot_graph(
+    G: nx.Graph,
+    anomaly_scores=None,
+    node_labels=None,
+    title: str = "Graph",
+    save_as: str | None = None,
+    pos=None,
+) -> None:
+    fig, ax = plt.subplots(figsize=FS["wide"])
     pos = pos or nx.spring_layout(G, seed=42)
 
     if anomaly_scores is not None:
         nodes = list(G.nodes())
-        if isinstance(anomaly_scores, dict):
-            colors = [anomaly_scores.get(n, 0) for n in nodes]
-        else:
-            colors = list(anomaly_scores)
-        nx.draw_networkx(G, pos=pos, ax=ax, node_color=colors,
-                         cmap=cm.RdYlGn_r, node_size=80,
-                         with_labels=node_labels is None,
-                         labels=node_labels, edge_color="gray",
-                         alpha=0.8, arrows=False)
-        sm = plt.cm.ScalarMappable(cmap=cm.RdYlGn_r,
-                                   norm=plt.Normalize(min(colors), max(colors)))
-        plt.colorbar(sm, ax=ax, label="Anomaly Score")
+        colors = (
+            [anomaly_scores.get(n, 0) for n in nodes]
+            if isinstance(anomaly_scores, dict)
+            else list(anomaly_scores)
+        )
+        nx.draw_networkx(
+            G, pos=pos, ax=ax,
+            node_color=colors, cmap=CMAP_SEQ,
+            node_size=60, with_labels=node_labels is None,
+            labels=node_labels, edge_color="#CCCCCC",
+            width=0.4, alpha=0.9, arrows=False,
+        )
+        sm = plt.cm.ScalarMappable(
+            cmap=CMAP_SEQ,
+            norm=mpl.colors.Normalize(min(colors), max(colors)),
+        )
+        plt.colorbar(sm, ax=ax, label="Anomaly score", shrink=0.8, pad=0.02)
     else:
-        nx.draw_networkx(G, pos=pos, ax=ax, node_size=80,
-                         edge_color="gray", alpha=0.8)
+        nx.draw_networkx(
+            G, pos=pos, ax=ax,
+            node_color=PALETTE["neutral"], node_size=60,
+            edge_color="#CCCCCC", width=0.4, alpha=0.9,
+        )
 
-    ax.set_title(title, fontsize=14)
+    ax.set_title(title)
     ax.axis("off")
     plt.tight_layout()
     if save_as:
-        out = FIGURES_DIR / save_as
-        plt.savefig(out, dpi=150, bbox_inches="tight")
-        print(f"[viz] Figura guardada: {out}")
+        save_figure(fig, save_as)
     plt.show()
 
 
-def plot_score_distribution(scores: np.ndarray, threshold: float = None,
-                            title: str = "Distribución de Anomaly Scores",
-                            save_as: str = None):
-    """Histograma de los scores de anomalía."""
-    fig, ax = plt.subplots(figsize=(8, 4))
-    ax.hist(scores, bins=50, color="steelblue", alpha=0.7, edgecolor="white")
+def plot_score_distribution(
+    scores: np.ndarray,
+    threshold: float | None = None,
+    title: str = "Anomaly score distribution",
+    graph: str = "M",
+    save_as: str | None = None,
+) -> None:
+    fig, ax = plt.subplots(figsize=FS["single"])
+    color = PALETTE.get(graph, PALETTE["neutral"])
+    ax.hist(scores, bins=50, color=color, alpha=0.85,
+            edgecolor="white", linewidth=0.3)
     if threshold is not None:
-        ax.axvline(threshold, color="red", linestyle="--", label=f"Umbral: {threshold:.3f}")
+        ax.axvline(
+            threshold, color=PALETTE["anomaly"],
+            linewidth=1.2, linestyle="--",
+            label=f"Threshold: {threshold:.3f}",
+        )
         ax.legend()
-    ax.set_xlabel("Anomaly Score")
-    ax.set_ylabel("Frecuencia")
+    ax.set_xlabel("Anomaly score")
+    ax.set_ylabel("Count")
     ax.set_title(title)
+    polish(ax)
     plt.tight_layout()
     if save_as:
-        out = FIGURES_DIR / save_as
-        plt.savefig(out, dpi=150, bbox_inches="tight")
-        print(f"[viz] Figura guardada: {out}")
+        save_figure(fig, save_as)
     plt.show()
 
 
-def plot_roc_curve(y_true, scores, save_as: str = None):
-    """Curva ROC."""
-    from sklearn.metrics import roc_curve, auc
+def plot_roc_curve(
+    y_true,
+    scores,
+    graph: str = "M",
+    save_as: str | None = None,
+) -> None:
+    from sklearn.metrics import auc, roc_curve
+
     fpr, tpr, _ = roc_curve(y_true, scores)
     roc_auc = auc(fpr, tpr)
-    fig, ax = plt.subplots(figsize=(6, 5))
-    ax.plot(fpr, tpr, color="darkorange", lw=2, label=f"ROC (AUC = {roc_auc:.3f})")
-    ax.plot([0, 1], [0, 1], "k--", lw=1)
-    ax.set_xlabel("False Positive Rate")
-    ax.set_ylabel("True Positive Rate")
-    ax.set_title("Curva ROC")
+    color = PALETTE.get(graph, PALETTE["neutral"])
+
+    fig, ax = plt.subplots(figsize=FS["single"])
+    ax.plot(fpr, tpr, color=color, linewidth=1.8, label=f"AUC = {roc_auc:.3f}")
+    ax.plot([0, 1], [0, 1], color=PALETTE["neutral"],
+            linewidth=0.8, linestyle="--")
+    ax.set_xlabel("False positive rate")
+    ax.set_ylabel("True positive rate")
+    ax.set_title("ROC curve")
     ax.legend()
+    polish(ax, grid=False)
     plt.tight_layout()
     if save_as:
-        out = FIGURES_DIR / save_as
-        plt.savefig(out, dpi=150, bbox_inches="tight")
+        save_figure(fig, save_as)
     plt.show()
