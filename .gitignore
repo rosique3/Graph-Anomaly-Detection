@@ -1,15 +1,6 @@
-# ─── Datos ────────────────────────────────────────────────────────────────────
-data/raw/
-data/processed/
-data/external/
-data/results/
-
-# ─── Resultados y Gráficos pesados ────────────────────────────────────────────
-results/
-images/
-graphs/*.png
-graphs/*.svg
-map/
+# ─── Imágenes incompatibles/pesadas para GitHub ───────────────────────────────
+*.svg
+*.pdf
 
 # ─── Modelos y resultados grandes ─────────────────────────────────────────────
 experiments/results/*.pt
