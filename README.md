@@ -345,7 +345,7 @@ data_MG.n_groups    # Número de nodos grupo (últimos n_groups nodos)
 | Entrenamiento DOMINANT (M, G, MG) | ✅ Completado |
 | Entrenamiento GAD-NR (M, G, MG) | ✅ Completado |
 | Validación cualitativa contra el EDA | ✅ Completado |
-| Redacción de la memoria | 🔲 Fase final de revisión |
+| Redacción de la memoria | ✅ Completado |
 
 ---
 
